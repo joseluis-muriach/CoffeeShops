@@ -1,15 +1,11 @@
 package com.example.coffeeshops
 
-import android.annotation.SuppressLint
-import android.graphics.Color
-import android.graphics.ColorFilter
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -17,14 +13,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
@@ -32,7 +25,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -42,15 +34,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 import com.example.coffeeshops.ui.theme.FontTittle
+import com.example.coffeeshops.ui.theme.Purple40
+import com.example.coffeeshops.ui.theme.PurpleGrey80
 
 data class Picture(
     @DrawableRes var photo: Int,
@@ -59,13 +52,14 @@ data class Picture(
 )
 
 @Composable
-fun MenuShop() {
+fun MenuShop(navController: NavHostController) {
     val context = LocalContext.current
     LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         items(getPicture()) { superPicture ->
-            ItemPicture(picture = superPicture) {
-
-            }
+            ItemPicture(
+                picture = superPicture,
+                navController = navController,
+            )
         }
     }
 }
@@ -111,77 +105,111 @@ fun getPicture(): List<Picture> {
 }
 
 @Composable
-fun ItemPicture(picture: Picture, onItemSelected: (Picture) -> Unit) {
+fun ItemPicture(picture: Picture, navController: NavHostController) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(10.dp)
-            .clickable {},
+            .clickable {
+                navController.navigate("MainComments/${picture.nameShop}")
+            },
     ) {
         Image(
             modifier = Modifier
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .size(200.dp),
             painter = painterResource(id = picture.photo),
             contentDescription = "",
             contentScale = ContentScale.Crop,
-
-        )
+            )
         Row(Modifier.fillMaxWidth()) {
-            Text(text = picture.nameShop,
+            Text(
+                text = picture.nameShop,
                 fontSize = 30.sp,
                 fontFamily = FontTittle,
-                modifier = Modifier.padding(10.dp))
-        }
-        Row {
-            IconRow()
+                modifier = Modifier.padding(10.dp)
+            )
         }
         Spacer(modifier = Modifier.padding(10.dp))
+        RatingBar()
+
+        Spacer(modifier = Modifier.padding(10.dp))
         Row {
-            Text(text = picture.nickName,
-                modifier = Modifier.padding(10.dp))
+            Text(
+                text = picture.nickName,
+                modifier = Modifier.padding(10.dp)
+            )
         }
         Divider()
         TextButton(onClick = { /*TODO*/ }) {
-            Text(text = "REVERSE")
+            Text(text = "REVERSE",
+                color = Color.Black)
         }
     }
 }
 
-@Composable
-fun IconRow() {
-    Row(
-        horizontalArrangement = Arrangement.SpaceAround
-    ) {
-        ClickableIcon(icon = Icons.Default.Star) { }
-        ClickableIcon(icon = Icons.Default.Star) { }
-        ClickableIcon(icon = Icons.Default.Star) { }
-        ClickableIcon(icon = Icons.Default.Star) { }
-        ClickableIcon(icon = Icons.Default.Star) { }
-    }
-}
+//@Composable
+//fun Stars(isFilled: Boolean, onStarClick: () -> Unit) {
+//
+//    val starOutlinePainter = painterResource(id = R.drawable.staroutline)
+//    val star = painterResource(id = R.drawable.star)
+//
+//    Icon(
+//        painter = if (isFilled) star else starOutlinePainter,
+//        contentDescription = null,
+//        tint =
+//        if (isFilled) androidx.compose.ui.graphics.Color.Yellow
+//        else androidx.compose.ui.graphics.Color.Gray,
+//        modifier = Modifier.clickable(onClick = onStarClick)
+//    )
+//}
+//
+//@Composable
+//fun StarRatingBar(
+//    rating: MutableState<Int>,
+//    maxStars: Int = 5
+//) {
+//    Row(
+//        Modifier.padding(horizontal = 4.dp),
+//        horizontalArrangement = Arrangement.spacedBy(4.dp)
+//    ) {
+//        for (i in 1..maxStars) {
+//            Stars(
+//                isFilled = i <= rating.value,
+//                onStarClick = {
+//                    rating.value = i
+//                }
+//            )
+//        }
+//    }
+//}
 
 @Composable
-fun ClickableIcon(icon: ImageVector, onClick: () -> Unit) {
-    var isClicked by remember { mutableStateOf(false) }
+fun RatingBar(
+    modifier: Modifier = Modifier,
+    stars: Int = 5,
+) {
+    var starStates by remember { mutableStateOf(List(stars) { false }) }
 
-    val iconTint = if (isClicked) {
-        Color.YELLOW
-    } else {
-        Color.GRAY
+
+    val onStarClick: (Int) -> Unit = { starIndex ->
+        starStates = starStates.mapIndexed { index, _ ->
+            index <= starIndex
+        }
     }
 
-    Icon(
-        imageVector = icon,
-        contentDescription = null,
-        modifier = Modifier
-            .padding(10.dp)
-            .size(25.dp)
-            .clickable {
-                isClicked = !isClicked
-                onClick()
-            }
-            .tint(iconTint)
-    )
+    Row(modifier = modifier) {
+        starStates.forEachIndexed { index, isFilled ->
+            Icon(
+                imageVector = Icons.Outlined.Star,
+                contentDescription = null,
+                tint = if (isFilled) Color.Yellow else Color.Gray,
+                modifier = Modifier
+                    .padding(start = 10.dp)
+                    .clickable { onStarClick(index) }
+            )
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -189,7 +217,7 @@ fun ClickableIcon(icon: ImageVector, onClick: () -> Unit) {
 fun MyTopAppBar() {
     var showMenu by remember { mutableStateOf(false) }
     TopAppBar(
-        title= { Text(text = "CoffeShops") },
+        title = { Text(text = "CoffeShops") },
         /*colors = TopAppBarDefaults.topAppBarColors(
             background = Color.White, // Establece el color de fondo a blanco
         ),*/
@@ -200,7 +228,7 @@ fun MyTopAppBar() {
         },
         actions = {
             IconButton(onClick = { showMenu = !showMenu }) {
-                Icon(imageVector = Icons.Filled.MoreVert , contentDescription = "Menú")
+                Icon(imageVector = Icons.Filled.MoreVert, contentDescription = "Menú")
             }
             DropdownMenu(
                 expanded = showMenu,
@@ -210,12 +238,22 @@ fun MyTopAppBar() {
                 DropdownMenuItem(
                     text = { Text(text = "Compartir") },
                     onClick = { /*TODO*/ },
-                    leadingIcon = { Icon(imageVector = Icons.Filled.Share, contentDescription = "Compartir") }
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.Share,
+                            contentDescription = "Compartir"
+                        )
+                    }
                 )
                 DropdownMenuItem(
                     text = { Text(text = "Album") },
                     onClick = { /*TODO*/ },
-                    leadingIcon = { Icon(imageVector = Icons.Filled.Lock, contentDescription = "Lock") }
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.Lock,
+                            contentDescription = "Lock"
+                        )
+                    }
                 )
             }
         }

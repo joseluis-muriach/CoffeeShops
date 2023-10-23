@@ -22,6 +22,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.coffeeshops.ui.theme.CoffeeShopsTheme
 
 class MainActivity : ComponentActivity() {
@@ -37,8 +42,16 @@ class MainActivity : ComponentActivity() {
                         MyTopAppBar()
                     }
                 ) {
-                    MenuShop()
-                    //MainComments()
+                    val navController  = rememberNavController()
+                    NavHost(navController = navController, startDestination = "MenuShop"){
+                        composable("MenuShop") { MenuShop(navController = navController) }
+                        composable(
+                            route = "MainComments/{cafeteriaName}",
+                            arguments = listOf(navArgument("cafeteriaName") { type = NavType.StringType })
+                        ) { backStackEntry ->
+                            MainComments(backStackEntry.arguments?.getString("cafeteriaName") ?: "", navController)
+                        }
+                    }
                 }
             }
         }
